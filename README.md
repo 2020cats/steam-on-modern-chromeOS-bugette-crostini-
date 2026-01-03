@@ -14,13 +14,8 @@ And if you can:
 
 
 Now you can go into the chromeOS settings and setup the Linux development environment. I recomend no less then 20GB to ensure you have the space for steam and then some.
-Then enter the crosh (Alt + Ctrl + T) stop termina and launch it with --enable-gpu --enable-vulkan 
-Or paste this this:
-  vmc stop termina
-  vmc launch termina --enable-gpu --enable-vulkan
-  
 
-Inside penguin in crosh or the terminal app, you now must make sure your system is up to date. Add the i386 architecture and install: mesa-vulkan-drivers, mesa-vulkan-drivers:i386, vulkan-tools, libvulkan1, libvulkan1:i386, libvulkan-dev, and libvulkan-dev:i386. You can try vmc start but it doesn't seem ti work with vulkan.
+Inside penguin in crosh or the terminal app, you now must make sure your system is up to date. Add the i386 architecture and install: mesa-vulkan-drivers, mesa-vulkan-drivers:i386, vulkan-tools, libvulkan1, libvulkan1:i386, libvulkan-dev, and libvulkan-dev:i386. You can try vmc start but it doesn't seem to work with vulkan.
 
   #if using crosh
   vsh termina penguin
@@ -30,6 +25,11 @@ Inside penguin in crosh or the terminal app, you now must make sure your system 
   sudo apt install mesa-vulkan-drivers mesa-vulkan-drivers:i386 vulkan-tools libvulkan1 libvulkan1:i386 libvulkan-    dev libvulkan-dev:i386 -y
 
 To make ensure the system does not change back, you must find the name of virtio json file. Then, enter the /etc/environment and set VK_ICD_FILENAMES to that file path
+
+Then enter the crosh (Alt + Ctrl + T) stop termina and launch it with --enable-gpu --enable-vulkan 
+Or paste this this:
+  vmc stop termina
+  vmc launch termina --enable-gpu --enable-vulkan
   
   ls /usr/share/vulkan/icd.d/
   sudo nano /etc/environment
