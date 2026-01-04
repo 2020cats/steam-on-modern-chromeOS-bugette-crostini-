@@ -36,12 +36,11 @@ for file in /usr/share/vulkan/icd.d/*; do
         echo "VK_ICD_FILENAMES=$file" | sudo tee -a /etc/environment > /dev/null
 
         sudo sed  -i "/VK_ICD_FILENAMES=/d" ~/.bashrc
-        echo "VK_ICD_FILENAMES=$file" >> ~/.bashrc
-
+        sudo sed  -i "/VK_INSTANCE_LAYERS=/d" ~/.bashrc
         cat <<EOF > ~/.config/systemd/user/cros-garcon.service.d/vulkan.conf
 [Service]
 Environment="VK_ICD_FILENAMES=$file"
-Environment="VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_selec 
+Environment="VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
 EOF
         break 
     fi
