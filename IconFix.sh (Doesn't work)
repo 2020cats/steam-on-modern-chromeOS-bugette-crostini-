@@ -10,7 +10,10 @@ find /usr/share/applications -name "*steam*.desktop" | while read -r file; do
     sed -i "s|^Icon=.*|Icon=$HOME/.local/share/icons/steam_fix.svg|" "$fileNewHome"
     sed -i "s|^Name=.*|Name=Steam|" "$fileNewHome"
 
-    touch "$fileNewHome"
+    sudo cp "$fileNewHome" "$file"
+
+    sudo touch "$file"
+
 done
 
 find /usr/share/applications \( -name "xterm.desktop" -o -name "uxterm.desktop" \) | while read -r file; do
@@ -21,5 +24,7 @@ find /usr/share/applications \( -name "xterm.desktop" -o -name "uxterm.desktop" 
     sed -i '/^NoDisplay=/d' "$fileNewHome"
     echo "NoDisplay=true" >> "$fileNewHome"
 
-    touch "$fileNewHome"
+    sudo cp "$fileNewHome" "$file"
+
+    sudo touch "$file"
 done
