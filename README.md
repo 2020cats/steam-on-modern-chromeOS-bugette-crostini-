@@ -1,8 +1,8 @@
 # WARNING: This does not work all the way yet!!!!!!
 
 # Installing steam on modern chromeOS crostini using vulkan (2026)
-I went through the process of downloading steam on chromeOS penguin using the new baguette version so you don't have to...
-Please note: This was made at the very start of 2026, so some things may change or break. Also this may take a very long time depending on your internet speed. (Don't do this on hotel wifi :() 
+THis is a process intended to install steam and vulkan for crostini. You can either follow the instructions or use the installer.
+Please note: This was made at the very start of 2026, so some things may change or break. Also this may take a very long time depending on your internet speed. (Don't do this on slow wifi D:) 
 
 # Prep
 
@@ -20,28 +20,28 @@ You must enable the following chrome flags BEFORE you create the linux enviromen
 Now you can go into the chromeOS settings and setup the Linux development environment. I recomend no less then 20GB to ensure you have the space for steam and then some.
 
 # Setup using Installer
-Run the VulkanSteamInstaller.sh file and follow its instructions:
+Run the VulkanSteamInstaller.sh file and follow its instructions. *It will crash the seshion, so you will need to exicute the file twice.
 ```
 bash "$(find ~ -name VulkanSteamInstaller.sh | head -n 1)"
 ```
 
-Test using  vulkaninfo --summary or vkcube.
+Test using vulkaninfo --summary or vkcube.
 If you get errors about wayland you can download westion.
 ```
 sudo apt install weston
 weston --vk-renderer
 ```
 
-Otherwise...
+**Otherwise...**
 
-# Install Vulkan on your own
+# Install Vulkan without Installer
 
-Inside penguin in crosh or the terminal app, you now must make sure your system is up to date. Add the i386 architecture and install: mesa-vulkan-drivers, mesa-vulkan-drivers:i386, vulkan-tools, libvulkan1, libvulkan1:i386, libvulkan-dev, and libvulkan-dev:i386. You can try vmc start but it doesn't seem to work with vulkan.
+Inside penguin in crosh you now must make sure your system is up to date. Add the i386 architecture and install: mesa-vulkan-drivers, mesa-vulkan-drivers:i386, vulkan-tools, libvulkan1, libvulkan1:i386, libvulkan-dev, and libvulkan-dev:i386. You can try vmc start but it doesn't seem to work with vulkan.
 ```
-#if using crosh:
-    vmc stop termina
-    vmc launch termina --gpu-support --enable-vulkan
-    vsh termina penguin
+#Enters crostini from crosh. You WILL get an error after launch.
+vmc stop termina
+vmc launch termina --gpu-support --enable-vulkan
+vsh termina penguin
 
 sudo dpkg --add-architecture i386
 sudo apt update && sudo apt upgrade
@@ -51,7 +51,7 @@ sudo apt install mesa-vulkan-drivers mesa-vulkan-drivers:i386 vulkan-tools libvu
 
 To make ensure the system does not change back, you must find the name of virtio json file. Then, enter the /etc/environment and set VK_ICD_FILENAMES to that file path
 
-Then enter the crosh (Alt + Ctrl + T) stop termina and launch it with --enable-gpu --enable-vulkan 
+Then enter the crosh (Alt + Ctrl + T) stop termina and launch it with --enable-gpu --enable-vulkan. You then need to find the file path to your virtio json file. *If you don't see it, you didn't enale gpu correctly.
 Or paste this this:
   ```
 vmc stop termina
@@ -70,9 +70,6 @@ nano ~/.bashrc
     export VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select
 ```
 
-You also need to add the "video" and "render" groups for vulkan to be able to commuticate with the gpu.
-  ```sudo /usr/sbin/usermod -aG video,render $USER```
-
 You also may need to update the cros garcon
   ```
     systemctl --user edit cros-garcon.service
@@ -82,7 +79,12 @@ You also may need to update the cros garcon
         Environment="VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
 ```
 
-Reload and restart the garcon: (This will crash the terminal or crosh seshion)
+You also need to add the "video" and "render" groups for vulkan to be able to commuticate with the gpu.
+  ```
+sudo /usr/sbin/usermod -aG video,render $USER
+  ```
+
+Reload and restart the garcon: (This will crash terminal or crosh)
 ```
 systemctl --user daemon-reload
 systemctl --user restart cros-garcon.service
@@ -98,7 +100,7 @@ Now you must verify that your gpu is using venus (the penguin gpu converter) and
 vulkaninfo --summary
   ```
 
-You can also try to use vkcube.If you see a spinning blue box, Vulkan is working. You may need to use wayland.
+You can also try to use vkcube. If you see a spinning blue box, Vulkan is working. You may need to use wayland.
   ```
 vkcube
 ```
@@ -110,9 +112,9 @@ weston --vk-renderer
 #or
 weston --backend=wayland --vk-renderer
 ```
-# Steam download on your own
+# Steam download without Installer
 
-Restart the VM using Crosh (Alt + Ctrl + T). Launch will give a error.
+Restart the VM using Crosh (Alt + Ctrl + T). Launch will give an error.
 ```
 vmc stop termina
 vmc launch termina --gpu-support --enable-vulkan
@@ -126,9 +128,8 @@ sudo dpkg --add-architecture i386
 sudo apt update
 ```
 
-Now that you have the intergrated gpu and vulkan working, you can install steam. You probelly want to do it in the terminal, because it will also install the depecencies needed.
+Now that you have the intergrated gpu and vulkan working, you can install steam.
 
-If in terminal:
  ```
 sudo apt upgrade 
 sudo apt install steam:i386
@@ -157,3 +158,9 @@ vsh termina penguin
 
 Check garcon (journalctl --user -u cros-garcon)
 Check for gpu support (ls -l /dev/dri), search for card0 and renderD128
+If it says it cannot download a package or depecency try: (Make sure it updates)
+```
+sudo sed -i 's/main$/main contrib non-free non-free-firmware/' /etc/apt/sources.list
+sudo dpkg --add-architecture i386
+sudo apt update
+```
