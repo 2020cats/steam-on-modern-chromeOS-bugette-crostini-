@@ -79,7 +79,7 @@ EOF
 
 fi
 
-if [[ ("$currentState") == "SETUP_DONE" ]]; then
+if [[ "$currentState" == "SETUP_DONE" ]]; then
 
     drawLine
     echo "Install continuing..."
