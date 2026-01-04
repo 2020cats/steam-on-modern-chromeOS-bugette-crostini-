@@ -40,7 +40,7 @@ Inside penguin in crosh or the terminal app, you now must make sure your system 
 ```
 #if using crosh:
     vmc stop termina
-    vmc luanch termina --gpu-support --enable-vulkan
+    vmc launch termina --gpu-support --enable-vulkan
     vsh termina penguin
 
 sudo dpkg --add-architecture i386
@@ -61,11 +61,11 @@ vmc launch termina --enable-gpu --enable-vulkan
 ls /usr/share/vulkan/icd.d/
 sudo nano /etc/environment
     #delete any VK values and enter: 
-    export VK_ICD_FILENAMES=<your file path probably /usr/share/vulkan/icd.d/virtio_icd.json>
-    export VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select
+    VK_ICD_FILENAMES=<your file path probably /usr/share/vulkan/icd.d/virtio_icd.json>
+    VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select
 
 nano ~/.bashrc
-    #paste this at the end to be safe 
+    #paste this at the end to be safe
     export VK_ICD_FILENAMES=<same file path as before>
     export VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select
 ```
@@ -82,11 +82,15 @@ You also may need to update the cros garcon
         Environment="VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
 ```
 
-Reload and restart the garcon:
+Reload and restart the garcon: (This will crash the terminal or crosh seshion)
 ```
 systemctl --user daemon-reload
 systemctl --user restart cros-garcon.service
  ```
+Or use the 'safe' mode:
+```
+systemctl --user import-environment
+```
    
 Now you must verify that your gpu is using venus (the penguin gpu converter) and not llvmpipe. To test this you can use vkcube. Another way to be sure is too run vulkan info (MESA_VK_DEVICE_SELECT=list vulkaninfo).
   
@@ -111,8 +115,15 @@ weston --backend=wayland --vk-renderer
 Restart the VM using Crosh (Alt + Ctrl + T). Launch will give a error.
 ```
 vmc stop termina
-vmc luanch termina --gpu-support --enable-vulkan
+vmc launch termina --gpu-support --enable-vulkan
 vsh termina penguin
+```
+
+You need to free your sources then update: 
+```
+sudo sed -i 's/main$/main contrib non-free non-free-firmware/' /etc/apt/sources.list
+sudo dpkg --add-architecture i386
+sudo apt update
 ```
 
 Now that you have the intergrated gpu and vulkan working, you can install steam. You probelly want to do it in the terminal, because it will also install the depecencies needed.
@@ -122,7 +133,7 @@ If in terminal:
 sudo apt upgrade 
 sudo apt install steam:i386
 ```
-You are going to see a app called "install steam" or something like that, and launch it. You shoud be able to lanuch the app with an otoption to install steam. For me it seem to go wrong, but it may not for you. You should try to luanch steam in the teminal using "steam". If it said that steam is allready running kill the process (pkill -9 -f steam), then try "steam" again. For me, steam then started downloading itself.
+You are going to see a app called "install steam" or something like that, and launch it. You shoud be able to lanuch the app with an otoption to install steam. For me it seem to go wrong, but it may not for you. You should try to launch steam in the teminal using "steam". If it said that steam is allready running kill the process (pkill -9 -f steam), then try "steam" again. For me, steam then started downloading itself.
 
 Then run to make sure all of the suggest depencies are downloaded: 
 ```
@@ -130,7 +141,8 @@ sudo apt install adwaita-icon-theme-legacy oss-compat lm-sensors:i386 pipewire:i
 ```
 Suggested but may not work:
 ```
-sudo apt install -m -y gvfs gvfs:i386 low-memory-monitor:i386 speex speex:i386 gnutls-bin:i386 krb5-doc:i386 krb5-user:i386 libgcrypt20:i386 liblz4-1:i386 libvisual-0.4-plugins jackd2 jackd2:i386 liblcms2-utils liblcms2-utils:i386 gtk2-engines-pixbuf:i386 libgtk2.0-0t64:i386 colord colord:i386 cryptsetup-bin:i386 opus-tools:i386 pulseaudio:i386 librsvg2-bin librsvg2-bin:i386 accountsservice evince xdg-desktop-portal-gnome xfonts-cyrillic
+sudo apt install -m -y gvfs gvfs:i386 low-memory-monitor:i386 speex speex:i386 gnutls-bin:i386 krb5-doc krb5-user:i386 libgcrypt20:i386 liblz4-1:i386 libvisual-0.4-plugins jackd2 jackd2:i386 liblcms2-utils liblcms2-utils:i386
+sudo apt install -m -y gtk2-engines-pixbuf:i386 libgtk2.0-0t64:i386 colord colord:i386 cryptsetup-bin:i386 opus-tools:i386 pulseaudio:i386 librsvg2-bin librsvg2-bin:i386 accountsservice evince xdg-desktop-portal-gnome xfonts-cyrillic
 ```
 
 # Finishing
@@ -138,7 +150,7 @@ sudo apt install -m -y gvfs gvfs:i386 low-memory-monitor:i386 speex speex:i386 g
 You now may want to update your system (sudo apt update) and must restart your VM using VMC in Crosh (Alt + Ctrl + T) and enable with gpu and vulkan support. Launch will give a error.
 ```
 vmc stop termina
-vmc luanch termina --gpu-support --enable-vulkan
+vmc launch termina --gpu-support --enable-vulkan
 vsh termina penguin
 ```
 # Troubleshooting
