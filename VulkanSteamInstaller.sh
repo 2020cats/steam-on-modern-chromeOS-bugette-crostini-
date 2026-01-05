@@ -182,26 +182,31 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
     fi
     
     testPassed=true
-    echo "Conducting self test..."
-    if glxinfo | grep -iq "virtio"; then
-        echo "Virtio-gpu is active."
+
+    if [[ "$1" == "--ignore-tests" ]]; then
+        echo "Skipping self-tests as requested by flag..."
     else
-        echo "Error: Hardware acceleration not detected. Check your 'Baguette' flags and relaunch in crosh."
-        testPassed=false
-    fi
+        if glxinfo | grep -iq "virtio"; then
+            echo "Conducting self test..."
+            echo "Virtio-gpu is active."
+        else
+            echo "Error: Hardware acceleration not detected. Check your 'Baguette' flags and relaunch in crosh."
+            testPassed=false
+        fi
     
-    if dpkg --print-foreign-architectures | grep -q "i386"; then
-        echo "i386 is enabled."
-    else
-        echo "Error: i386 is missing. Steam will not launch"
-        testPassed=false
-    fi
+        if dpkg --print-foreign-architectures | grep -q "i386"; then
+            echo "i386 is enabled."
+        else
+            echo "Error: i386 is missing. Steam will not launch"
+            testPassed=false
+        fi
     
-    if ls /usr/share/vulkan/icd.d/ 2>/dev/null | grep -q "virtio"; then
-        echo "Vulkan was downloaded correctly and has the json file in the correct place."
-    else
-        echo "Error: Vulkan was not downloaded correctly or the json file is in a incorrect place."
-        testPassed=false
+        if ls /usr/share/vulkan/icd.d/ 2>/dev/null | grep -q "virtio"; then
+            echo "Vulkan was downloaded correctly and has the json file in the correct place."
+        else
+            echo "Error: Vulkan was not downloaded correctly or the json file is in a incorrect place."
+            testPassed=false
+        fi
     fi
 
     if [ "$testPassed" = true ]; then
