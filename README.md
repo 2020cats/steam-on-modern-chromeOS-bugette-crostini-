@@ -20,6 +20,13 @@ You must enable the following chrome flags BEFORE you create the linux enviromen
 Now you can go into the chromeOS settings and setup the Linux development environment. I recomend no less then 20GB to ensure you have the space for steam and then some.
 
 # Setup using Installer
+Start the VM using Crosh (Alt + Ctrl + T). *vmc Launch will give an error.
+```
+vmc stop termina
+vmc launch termina --gpu-support --enable-vulkan
+vsh termina penguin
+```
+
 Run the VulkanSteamInstaller.sh file and follow its instructions. *It will crash the seshion, so you will need to exicute the file twice.
 ```
 bash "$(find ~ -name VulkanSteamInstaller.sh | head -n 1)"
