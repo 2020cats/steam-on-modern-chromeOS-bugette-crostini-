@@ -36,7 +36,7 @@ weston --vk-renderer
 
 # Install Vulkan without Installer
 
-Inside penguin in crosh you now must make sure your system is up to date. Add the i386 architecture and install: xwayland, libva-wayland2, libegl-mesa0, libegl1-mesa-dev, mesa-vulkan-drivers, mesa-vulkan-drivers:i386, vulkan-tools, libvulkan1, libvulkan1:i386, libvulkan-dev, libvulkan-dev:i386, libwayland-client0, libwayland-client0:i386, libwayland-server0, libwayland-server0:i386, libwayland-egl1:i386, libwayland-cursor0:i386, xdg-desktop-portal-gtk. You can try vmc start but it doesn't seem to work with, vulkan.
+Inside penguin in crosh you now must make sure your system is up to date. Add the i386 architecture and install: xwayland, libva-wayland2, libegl-mesa0, libegl1-mesa-dev, mesa-vulkan-drivers, mesa-vulkan-drivers:i386, vulkan-tools, mesa-utils, libvulkan1, libvulkan1:i386, libvulkan-dev, libvulkan-dev:i386, libwayland-client0, libwayland-client0:i386, libwayland-server0, libwayland-server0:i386, libwayland-egl1:i386, libwayland-cursor0:i386, xdg-desktop-portal-gtk. You can try vmc start but it doesn't seem to work with, vulkan.
 ```
 #Enters crostini from crosh. You WILL get an error after launch.
 vmc stop termina
@@ -46,7 +46,7 @@ vsh termina penguin
 sudo dpkg --add-architecture i386
 sudo apt update && sudo apt upgrade
 
-sudo apt install -y -m  xwayland libva-wayland2 libegl-mesa0 libegl1-mesa-dev mesa-vulkan-drivers mesa-vulkan-drivers:i386 vulkan-tools libvulkan1 libvulkan1:i386 libvulkan-dev libvulkan-dev:i386 libwayland-client0 libwayland-client0:i386 libwayland-server0 libwayland-server0:i386 libwayland-egl1:i386 libwayland-cursor0:i386 xdg-desktop-portal-gtk
+sudo apt install -y -m mesa-utils xwayland libva-wayland2 libegl-mesa0 libegl1-mesa-dev mesa-vulkan-drivers mesa-vulkan-drivers:i386 vulkan-tools libvulkan1 libvulkan1:i386 libvulkan-dev libvulkan-dev:i386 libwayland-client0 libwayland-client0:i386 libwayland-server0 libwayland-server0:i386 libwayland-egl1:i386 libwayland-cursor0:i386 xdg-desktop-portal-gtk
 ```
 
 To make ensure the system does not change back, you must find the name of virtio json file. Then, enter the /etc/environment and set VK_ICD_FILENAMES to that file path
