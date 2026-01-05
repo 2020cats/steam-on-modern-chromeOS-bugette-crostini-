@@ -50,6 +50,7 @@ if [[ "$currentState" == "START" ]]; then
 
     sleep 5
 
+    sudo usermod -aG video,render $USER
 
     echo "Install started..."
 
