@@ -1,4 +1,5 @@
 #!/bin/bash
+[[ -x "$0" ]] || chmod +x "$0" 2>/dev/null
 
 getCols() {
     # 1. Try tput
@@ -177,7 +178,7 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
         testPassed=false
     fi
     
-    if ls /usr/share/vulkan/icd.d/ 2>/dehatv/null | grep -q "virtio"; then
+    if ls /usr/share/vulkan/icd.d/ 2>/dev/null | grep -q "virtio"; then
         echo "Vulkan was downloaded correctly and has the json file in the correct place."
     else
         echo "Error: Vulkan was not downloaded correctly or the json file is in a incorrect place."
