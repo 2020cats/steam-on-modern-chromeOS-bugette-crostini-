@@ -36,7 +36,7 @@ weston --vk-renderer
 
 # Install Vulkan without Installer
 
-Inside penguin in crosh you now must make sure your system is up to date. Add the i386 architecture and install: mesa-vulkan-drivers, mesa-vulkan-drivers:i386, vulkan-tools, libvulkan1, libvulkan1:i386, libvulkan-dev, and libvulkan-dev:i386. You can try vmc start but it doesn't seem to work with vulkan.
+Inside penguin in crosh you now must make sure your system is up to date. Add the i386 architecture and install: xwayland, libva-wayland2, libegl-mesa0, libegl1-mesa-dev, mesa-vulkan-drivers, mesa-vulkan-drivers:i386, vulkan-tools, libvulkan1, libvulkan1:i386, libvulkan-dev, libvulkan-dev:i386, libwayland-client0, libwayland-client0:i386, libwayland-server0, libwayland-server0:i386, libwayland-egl1:i386, libwayland-cursor0:i386, xdg-desktop-portal-gtk. You can try vmc start but it doesn't seem to work with, vulkan.
 ```
 #Enters crostini from crosh. You WILL get an error after launch.
 vmc stop termina
@@ -45,8 +45,8 @@ vsh termina penguin
 
 sudo dpkg --add-architecture i386
 sudo apt update && sudo apt upgrade
-  
-sudo apt install mesa-vulkan-drivers mesa-vulkan-drivers:i386 vulkan-tools libvulkan1 libvulkan1:i386 libvulkan-dev libvulkan-dev:i386 -y
+
+sudo apt install -y -m  xwayland libva-wayland2 libegl-mesa0 libegl1-mesa-dev mesa-vulkan-drivers mesa-vulkan-drivers:i386 vulkan-tools libvulkan1 libvulkan1:i386 libvulkan-dev libvulkan-dev:i386 libwayland-client0 libwayland-client0:i386 libwayland-server0 libwayland-server0:i386 libwayland-egl1:i386 libwayland-cursor0:i386 xdg-desktop-portal-gtk
 ```
 
 To make ensure the system does not change back, you must find the name of virtio json file. Then, enter the /etc/environment and set VK_ICD_FILENAMES to that file path
@@ -60,23 +60,37 @@ vmc launch termina --enable-gpu --enable-vulkan
   
 ls /usr/share/vulkan/icd.d/
 sudo nano /etc/environment
-    #delete any VK values and enter: 
-    VK_ICD_FILENAMES=<your file path probably /usr/share/vulkan/icd.d/virtio_icd.json>
+    #delete any Vk, wayland, or XDG values and enter: 
+    VK_ICD_FILENAMES=<same file path as before>
     VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select
+    WAYLAND_DISPLAY=wayland-0
+    XDG_RUNTIME_DIR=/run/user/$(id -u)
+    XDG_SESSION_TYPE=wayland
+    QT_QPA_PLATFORM=wayland
 
 nano ~/.bashrc
     #paste this at the end to be safe
     export VK_ICD_FILENAMES=<same file path as before>
     export VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select
+    export WAYLAND_DISPLAY=wayland-0
+    export XDG_RUNTIME_DIR=/run/user/$(id -u)
+    export XDG_SESSION_TYPE=wayland
+    export QT_QPA_PLATFORM=wayland
 ```
 
 You also may need to update the cros garcon
   ```
-    systemctl --user edit cros-garcon.service
-        #add this:
-        [Service]
-        Environment="VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/virtio_icd.json"
-        Environment="VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
+systemctl --user edit cros-garcon.service
+
+#add this:
+[Service]
+Environment="VK_ICD_FILENAMES=<save file path from before>"
+Environment="VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
+Environment="XDG_RUNTIME_DIR=/run/user/%U"
+Environment="WAYLAND_DISPLAY=wayland-0"
+Environment="DISPLAY=:0"
+Environment="XDG_SESSION_TYPE=wayland"
+Environment="QT_QPA_PLATFORM=wayland"
 ```
 
 You also need to add the "video" and "render" groups for vulkan to be able to commuticate with the gpu.
@@ -128,19 +142,20 @@ sudo dpkg --add-architecture i386
 sudo apt update
 ```
 
-Now that you have the intergrated gpu and vulkan working, you can install steam.
+Now that you have the intergrated gpu and vulkan working, you can install steam. After it installed you can just type 'steam' to get it to setup.
 
  ```
 sudo apt upgrade 
 sudo apt install steam:i386
+
+steam
 ```
-You are going to see a app called "install steam" or something like that, and launch it. You shoud be able to lanuch the app with an otoption to install steam. For me it seem to go wrong, but it may not for you. You should try to launch steam in the teminal using "steam". If it said that steam is allready running kill the process (pkill -9 -f steam), then try "steam" again. For me, steam then started downloading itself.
 
 Then run to make sure all of the suggest depencies are downloaded: 
 ```
 sudo apt install adwaita-icon-theme-legacy oss-compat lm-sensors:i386 pipewire:i386 pocl-opencl-icd:i386  mesa-opencl-icd:i386  rocm-opencl-icd 5.7.1-6+deb13u1 pocl-opencl-icd 6.0-6 mesa-opencl-icd
 ```
-Suggested but may not work:
+Suggested but may not all work:
 ```
 sudo apt install -m -y gvfs gvfs:i386 low-memory-monitor:i386 speex speex:i386 gnutls-bin:i386 krb5-doc krb5-user:i386 libgcrypt20:i386 liblz4-1:i386 libvisual-0.4-plugins jackd2 jackd2:i386 liblcms2-utils liblcms2-utils:i386
 sudo apt install -m -y gtk2-engines-pixbuf:i386 libgtk2.0-0t64:i386 colord colord:i386 cryptsetup-bin:i386 opus-tools:i386 pulseaudio:i386 librsvg2-bin librsvg2-bin:i386 accountsservice evince xdg-desktop-portal-gnome xfonts-cyrillic
@@ -153,6 +168,13 @@ You now may want to update your system (sudo apt update) and must restart your V
 vmc stop termina
 vmc launch termina --gpu-support --enable-vulkan
 vsh termina penguin
+
+export VK_ICD_FILENAMES=<file path from before>
+export DISPLAY=:0
+export WAYLAND_DISPLAY=wayland-0
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+export XDG_SESSION_TYPE=wayland
+export QT_QPA_PLATFORM=wayland
 ```
 # Troubleshooting
 
