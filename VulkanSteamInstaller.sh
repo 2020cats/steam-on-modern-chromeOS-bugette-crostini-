@@ -50,7 +50,7 @@ if [[ "$currentState" == "START" ]]; then
 
     sleep 5
 
-    sudo usermod -aG video,render $USER
+   
 
     echo "Install started..."
 
@@ -74,62 +74,76 @@ if [[ "$currentState" == "START" ]]; then
         fi
         sudo apt update
     fi
+
+    echo "Cleaning files and config"
     
     mkdir -p ~/.config/systemd/user/cros-garcon.service.d/
+    rm -f ~/.config/systemd/user/cros-garcon.service.d/*.conf
+    vulkanConfHome="$HOME/.config/systemd/user/cros-garcon.service.d/vulkan.conf"
+    touch "$vulkanConfHome"
 
     
-    for file in /usr/share/vulkan/icd.d/*; do
 
+    vars=("VK_ICD_FILENAMES" "WAYLAND_DISPLAY" "XDG_RUNTIME_DIR" "XDG_SESSION_TYPE" "GDK_BACKEND" "QT_QPA_PLATFORM" "VK_INSTANCE_LAYERS" "DISPLAY")
+
+    for var in "${vars[@]}"; do
+        sudo sed -i "/^$var=/d" /etc/environment
+        sed -i "/export $var=/d" ~/.bashrc
+        sed -i "/Environment=\"$var=/d" "$vulkanConfHome"
+    done
+
+        
+    for file in /usr/share/vulkan/icd.d/*; do        
+        
         filename=$(basename "$file")
     
         if [[ "$filename" == virtio* ]]; then
             newLine="VK_ICD_FILENAMES=$file"
-
-            echo "Found file: $filename"
         
-            sudo sed -i '/VK_ICD_FILENAMES=/d' /etc/environment
             echo "VK_ICD_FILENAMES=$file" | sudo tee -a /etc/environment > /dev/null
-
-            sed -i "/VK_ICD_FILENAMES=/d" ~/.bashrc
-            sed -i "/VK_INSTANCE_LAYERS=/d" ~/.bashrc
-            sed -i "/WAYLAND_DISPLAY=/d" ~/.bashrc
-            sed -i "/XDG_RUNTIME_DIR=/d" ~/.bashrc
-            sed -i "/XDG_SESSION_TYPE=/d" ~/.bashrc
-            sed -i "/QT_QPA_PLATFORM=/d" ~/.bashrc
+            echo "VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select" | sudo tee -a /etc/environment > /dev/null        
             
-            echo "export VK_ICD_FILENAMES=$file" >> ~/.bashrc
-            echo "export VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select" >> ~/.bashrc
-            echo "export WAYLAND_DISPLAY=wayland-0" >> ~/.bashrc
-            echo "export XDG_RUNTIME_DIR=/run/user/\$(id -u)" >> ~/.bashrc
-            echo "export XDG_SESSION_TYPE=wayland" >> ~/.bashrc
-            echo "export QT_QPA_PLATFORM=wayland" >> ~/.bashrc
-            
+            {
+                echo "export VK_ICD_FILENAMES=$file"
+                echo "export XDG_RUNTIME_DIR=/run/user/\$(id -u)"
+                echo "export VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
+                echo "export WAYLAND_DISPLAY=wayland-0"
+                echo "export XDG_SESSION_TYPE=wayland"
+                echo "export GDK_BACKEND=wayland,x11"
+                echo "export QT_QPA_PLATFORM=wayland"
+                echo "export XDG_RUNTIME_DIR=\"/run/user/\$(id -u)\""
+                echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu"
+            } >> ~/.bashrc
 
             export VK_ICD_FILENAMES=$file
             export WAYLAND_DISPLAY=wayland-0
-            export XDG_RUNTIME_DIR=/run/user/$(id -u)
             export XDG_SESSION_TYPE=wayland
+            export GDK_BACKEND=wayland,x11
             export QT_QPA_PLATFORM=wayland
-            
+
             cat <<EOF > ~/.config/systemd/user/cros-garcon.service.d/vulkan.conf
 [Service]
 Environment="VK_ICD_FILENAMES=$file"
 Environment="VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
-Environment="XDG_RUNTIME_DIR=/run/user/%U"
 Environment="WAYLAND_DISPLAY=wayland-0"
 Environment="DISPLAY=:0"
+Environment="XDG_RUNTIME_DIR=/run/user/%U"
 Environment="XDG_SESSION_TYPE=wayland"
+Environment="GDK_BACKEND=wayland,x11"
 Environment="QT_QPA_PLATFORM=wayland"
+Environment="VK_USE_PLATFORM_XCB_KHR=1"
+Environment="VK_USE_PLATFORM_XLIB_KHR=1"
+Environment="VK_USE_PLATFORM_WAYLAND_KHR=1"
 EOF
+
+            if ! grep -q "\[Service\]" "$vulkanConfHome"; then
+                echo "[Service]" >> "$vulkanConfHome"
+            fi
             break 
         fi
     done
     
-
-    sudo sed -i "/VK_INSTANCE_LAYERS=/d" /etc/environment
-    echo "VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select" | sudo tee -a /etc/environment > /dev/null
-
-    sudo /usr/sbin/usermod -aG video,render $USER
+    sudo usermod -aG video,render $USER
     echo "Add video and render groups"
 
     echo "WARNING: Terminal will close in 5 seconds to restart the service bridge."
@@ -158,7 +172,6 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
         sudo sed -i 's/main$/main contrib non-free non-free-firmware/' /etc/apt/sources.list
         
     fi
-    sudo apt-add-repository non-free contrib
 
     sudo dpkg --add-architecture i386
     sudo apt update
@@ -180,6 +193,19 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
     else
         echo "Skipped recommended enhancement packages."
     fi
+
+    echo "Oppimizing for chromeOS settings and preferences"
+
+    sudo chmod 666 /dev/dri/renderD128 2>/dev/null
+    sudo chmod 666 /dev/dri/card0 2>/dev/null
+
+    export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/virtio_icd.json
+    export XDG_SESSION_TYPE=wayland
+    export GDK_BACKEND=wayland,x11
+    export WAYLAND_DISPLAY=wayland-0
+
+    export STEAM_RUNTIME_PREFER_HOST_LIBRARIES=1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu
     
     testPassed=true
 
