@@ -56,8 +56,7 @@ if [[ "$currentState" == "START" ]]; then
     sudo apt update && sudo apt upgrade
     sudo dpkg --add-architecture i386
     sudo apt update
-    sudo apt install -y -m mesa-utils mesa-vulkan-drivers mesa-vulkan-drivers:i386 vulkan-tools libvulkan1 libvulkan1:i386 libvulkan-dev libvulkan-dev:i386 
-
+    sudo apt install -y -m  xwayland libva-wayland2 libegl-mesa0 libegl1-mesa-dev mesa-vulkan-drivers mesa-vulkan-drivers:i386 vulkan-tools libvulkan1 libvulkan1:i386 libvulkan-dev libvulkan-dev:i386 libwayland-client0 libwayland-client0:i386 libwayland-server0 libwayland-server0:i386  libwayland-egl1:i386 libwayland-cursor0:i386 xdg-desktop-portal-gtk
     echo "Conducting safety measure..."
     if ls /etc/vulkan/icd.d/ 2>/dev/null | grep -q "virtio"; then
 
@@ -92,14 +91,34 @@ if [[ "$currentState" == "START" ]]; then
 
             sed -i "/VK_ICD_FILENAMES=/d" ~/.bashrc
             sed -i "/VK_INSTANCE_LAYERS=/d" ~/.bashrc
+            sed -i "/WAYLAND_DISPLAY=/d" ~/.bashrc
+            sed -i "/XDG_RUNTIME_DIR=/d" ~/.bashrc
+            sed -i "/XDG_SESSION_TYPE=/d" ~/.bashrc
+            sed -i "/QT_QPA_PLATFORM=/d" ~/.bashrc
+            
             echo "export VK_ICD_FILENAMES=$file" >> ~/.bashrc
             echo "export VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select" >> ~/.bashrc
+            echo "export WAYLAND_DISPLAY=wayland-0" >> ~/.bashrc
+            echo "export XDG_RUNTIME_DIR=/run/user/\$(id -u)" >> ~/.bashrc
+            echo "export XDG_SESSION_TYPE=wayland" >> ~/.bashrc
+            echo "export QT_QPA_PLATFORM=wayland" >> ~/.bashrc
+            
 
-         
+            export VK_ICD_FILENAMES=$file
+            export WAYLAND_DISPLAY=wayland-0
+            export XDG_RUNTIME_DIR=/run/user/$(id -u)
+            export XDG_SESSION_TYPE=wayland
+            export QT_QPA_PLATFORM=wayland
+            
             cat <<EOF > ~/.config/systemd/user/cros-garcon.service.d/vulkan.conf
 [Service]
 Environment="VK_ICD_FILENAMES=$file"
 Environment="VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
+Environment="XDG_RUNTIME_DIR=/run/user/%U"
+Environment="WAYLAND_DISPLAY=wayland-0"
+Environment="DISPLAY=:0"
+Environment="XDG_SESSION_TYPE=wayland"
+Environment="QT_QPA_PLATFORM=wayland"
 EOF
             break 
         fi
@@ -117,7 +136,6 @@ EOF
     saveState "SETUP_DONE"
 
     sleep 5
-    
 
     systemctl --user daemon-reload
     systemctl --user restart cros-garcon.service
@@ -188,9 +206,12 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
     if [ "$testPassed" = true ]; then
         drawLine
         echo "Setup Complete."
-        echo "1. Look for 'Install Steam' in your app drawer and launch it."
-        echo "2. If it hangs, run 'pkill -9 -f steam' and then type 'steam' in this terminal."
+        echo "Steam will start downloading in 5 secs"
         drawLine
+
+        sleep 5
+
+        steam
     else
         drawLine
         echo "Self test failed..."
