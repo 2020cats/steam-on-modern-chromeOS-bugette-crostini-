@@ -1,6 +1,7 @@
 #!/bin/bash
 [[ -x "$0" ]] || chmod +x "$0" 2>/dev/null
 
+#generate the dashes with the specfic method
 getCols() {
     # 1. Try tput
     if command -v tput >/dev/null 2>&1; then
@@ -14,12 +15,14 @@ getCols() {
     fi
 }
 
+#generate the dashes with the specfic method
 drawLine() {
     local cols=$(getCols)
     cols=${cols:-80}
     printf '%*s\n' "$cols" '' | tr ' ' -
 }
 
+#Trixie check
 if ! grep -q "trixie" /etc/os-release; then
     drawLine
     echo "ERROR: This script is designed for Debian Trixie."
@@ -28,6 +31,7 @@ if ! grep -q "trixie" /etc/os-release; then
     exit 1
 fi
 
+#Set ups the save file
 shopt -s nullglob
 stateFile="$HOME/.steam_install_state"
 
@@ -37,6 +41,7 @@ saveState() {
 
 currentState=$(cat "$stateFile" 2>/dev/null || echo "START")
 
+#The script BEFORE it crashes
 if [[ "$currentState" == "START" ]]; then
     echo "Please enable flags if you have not yet, then you must reinstall the LDE"
     drawLine
@@ -50,40 +55,66 @@ if [[ "$currentState" == "START" ]]; then
 
     sleep 5
 
-   
-
     echo "Install started..."
 
+    #get read for install 
     sudo apt update && sudo apt upgrade
     sudo dpkg --add-architecture i386
     sudo apt update
     sudo apt install -y -m mesa-utils xwayland libva-wayland2 libegl-mesa0 libegl1-mesa-dev mesa-vulkan-drivers mesa-vulkan-drivers:i386 vulkan-tools libvulkan1 libvulkan1:i386 libvulkan-dev libvulkan-dev:i386 libwayland-client0 libwayland-client0:i386 libwayland-server0 libwayland-server0:i386  libwayland-egl1:i386 libwayland-cursor0:i386 xdg-desktop-portal-gtk
-    echo "Conducting safety measure..."
-    if ls /etc/vulkan/icd.d/ 2>/dev/null | grep -q "virtio"; then
 
-        sudo mkdir -p /usr/share/vulkan/icd.d/
-        
-        if ls /usr/share/vulkan/icd.d/ 2>/dev/null | grep -q "virtio"; then
-            echo "Found json config duplicate in incorrect place, removing and backing up now..."
-            mkdir -p ~/vulkan_backup
-            sudo mv /etc/vulkan/icd.d/virtio* ~/vulkan_backup/ 2>/dev/null
-        else
-            echo "Found json config in incorrect place, correcting now..."
-            sudo mv /etc/vulkan/icd.d/virtio* /usr/share/vulkan/icd.d/ 2>/dev/null
-            sudo chmod 644 /usr/share/vulkan/icd.d/virtio* 2>/dev/null
-        fi
-        sudo apt update
-    fi
-
+    
     echo "Cleaning files and config"
+
+    vulkan64=$(find /usr/lib/x86_64-linux-gnu -name "libvulkan_virtio.so" | head -n 1)
+    vulkan32=$(find /usr/lib/i386-linux-gnu -name "libvulkan_virtio.so" | head -n 1)
+     
+    sudo rm -f /usr/share/vulkan/icd.d/virtio*
+    sudo rm -f /etc/vulkan/icd.d/virtio*
+
+    sudo mkdir -p /etc/vulkan/icd.d
+    cat <<EOF | sudo tee /etc/vulkan/icd.d/virtio_icd.x86_64.json
+{
+    "file_format_version": "1.0.0",
+    "ICD": {
+        "library_path": "$vulkan64",
+        "api_version": "1.3.269"
+    }
+}
+EOF
+
+    # 4. Create the 32-bit JSON (Essential for Steam)
+    cat <<EOF | sudo tee /etc/vulkan/icd.d/virtio_icd.i686.json
+{
+    "file_format_version": "1.0.0",
+    "ICD": {
+        "library_path": "$vulkan32",
+        "api_version": "1.3.269"
+    }
+}
+EOF
+
+    #Creating the new files for vulkan and configging them for vulkan on 64 and 32
+    sudo cp /etc/vulkan/icd.d/virtio_icd.x86_64.json /usr/share/vulkan/icd.d/
+    sudo cp /etc/vulkan/icd.d/virtio_icd.i686.json /usr/share/vulkan/icd.d/
+
+    echo "Conducting backup measure..."
+    #Safety measure to ensure file exist in correct place
+    
+    sudo mkdir -p /usr/share/vulkan/icd.d/
+    
+    sudo mkdir -p /usr/share/vulkan/backup/
+    cp /usr/share/vulkan/icd.d/virtio* /usr/share/vulkan/backup/
+    
+    sudo mkdir -p /etc/vulkan/backup/
+    cp /etc/vulkan/icd.d/virtio* /etc/vulkan/backup/
     
     mkdir -p ~/.config/systemd/user/cros-garcon.service.d/
     rm -f ~/.config/systemd/user/cros-garcon.service.d/*.conf
     vulkanConfHome="$HOME/.config/systemd/user/cros-garcon.service.d/vulkan.conf"
     touch "$vulkanConfHome"
 
-    
-
+    #clears the the file from old or conflig exports
     vars=("VK_ICD_FILENAMES" "WAYLAND_DISPLAY" "XDG_RUNTIME_DIR" "XDG_SESSION_TYPE" "GDK_BACKEND" "QT_QPA_PLATFORM" "VK_INSTANCE_LAYERS" "DISPLAY")
 
     for var in "${vars[@]}"; do
@@ -92,38 +123,51 @@ if [[ "$currentState" == "START" ]]; then
         sed -i "/Environment=\"$var=/d" "$vulkanConfHome"
     done
 
-        
-    for file in /usr/share/vulkan/icd.d/*; do        
-        
-        filename=$(basename "$file")
+    #Find file for vulkan and adds the export to files 
     
-        if [[ "$filename" == virtio* ]]; then
-            newLine="VK_ICD_FILENAMES=$file"
-        
-            echo "VK_ICD_FILENAMES=$file" | sudo tee -a /etc/environment > /dev/null
-            echo "VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select" | sudo tee -a /etc/environment > /dev/null        
-            
-            {
-                echo "export VK_ICD_FILENAMES=$file"
-                echo "export XDG_RUNTIME_DIR=/run/user/\$(id -u)"
-                echo "export VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
-                echo "export WAYLAND_DISPLAY=wayland-0"
-                echo "export XDG_SESSION_TYPE=wayland"
-                echo "export GDK_BACKEND=wayland,x11"
-                echo "export QT_QPA_PLATFORM=wayland"
-                echo "export XDG_RUNTIME_DIR=\"/run/user/\$(id -u)\""
-                echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu"
-            } >> ~/.bashrc
+    vulkanCompiledPath=""
+    for file in /usr/share/vulkan/icd.d/virtio*; do  
+        if [ -z "$vulkanCompiledPath" ]; then
+            vulkanCompiledPath="$file"
+        else
+            vulkanCompiledPath+=":$file"
+        fi
+    done
+    
+    #Adds exports files
+    echo "VK_ICD_FILENAMES=$vulkanCompiledPath" | sudo tee -a /etc/environment > /dev/null
+    echo "VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select" | sudo tee -a /etc/environment > /dev/null        
+    
+    {
+        echo "export VK_ICD_FILENAMES=$vulkanCompiledPath"
+        echo "export XDG_RUNTIME_DIR=/run/user/\$(id -u)"
+        echo "export VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
+        echo "export WAYLAND_DISPLAY=wayland-0"
+        echo "export XDG_SESSION_TYPE=wayland"
+        echo "export GDK_BACKEND=wayland,x11"
+        echo "export QT_QPA_PLATFORM=wayland"
+        echo "export XDG_RUNTIME_DIR=\"/run/user/\$(id -u)\""
+        echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu"
+        echo "export MESA_VK_DEVICE_SELECT=virtio"
+        echo "export VK_USE_PLATFORM_XLIB_KHR=1"
+        echo "export VK_USE_PLATFORM_XCB_KHR=1"
+        echo "export VK_USE_PLATFORM_WAYLAND_KHR=1"
+        echo "export STEAM_RUNTIME_PREFER_HOST_LIBRARIES=1"
+    } >> ~/.bashrc
 
-            export VK_ICD_FILENAMES=$file
-            export WAYLAND_DISPLAY=wayland-0
-            export XDG_SESSION_TYPE=wayland
-            export GDK_BACKEND=wayland,x11
-            export QT_QPA_PLATFORM=wayland
+    export VK_ICD_FILENAMES=$vulkanCompiledPath
+    export WAYLAND_DISPLAY=wayland-0
+    export XDG_SESSION_TYPE=wayland
+    export GDK_BACKEND=wayland,x11
+    export QT_QPA_PLATFORM=wayland
+    export MESA_VK_DEVICE_SELECT=virtio
+    export VK_USE_PLATFORM_XLIB_KHR=1
+    export VK_USE_PLATFORM_XCB_KHR=1
+    export VK_USE_PLATFORM_WAYLAND_KHR=1
 
-            cat <<EOF > ~/.config/systemd/user/cros-garcon.service.d/vulkan.conf
+    cat <<EOF > ~/.config/systemd/user/cros-garcon.service.d/vulkan.conf
 [Service]
-Environment="VK_ICD_FILENAMES=$file"
+Environment="VK_ICD_FILENAMES=$vulkanCompiledPath"
 Environment="VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
 Environment="WAYLAND_DISPLAY=wayland-0"
 Environment="DISPLAY=:0"
@@ -134,23 +178,32 @@ Environment="QT_QPA_PLATFORM=wayland"
 Environment="VK_USE_PLATFORM_XCB_KHR=1"
 Environment="VK_USE_PLATFORM_XLIB_KHR=1"
 Environment="VK_USE_PLATFORM_WAYLAND_KHR=1"
+Environment="MESA_VK_DEVICE_SELECT=virtio"
+Environment="STEAM_RUNTIME_PREFER_HOST_LIBRARIES=1"
 EOF
 
-            if ! grep -q "\[Service\]" "$vulkanConfHome"; then
-                echo "[Service]" >> "$vulkanConfHome"
-            fi
-            break 
-        fi
-    done
+    if ! grep -q "\[Service\]" "$vulkanConfHome"; then
+        echo "[Service]" >> "$vulkanConfHome"
+    fi
     
+
+    #Adds premissions and groups required.
+    sudo chmod 666 /dev/dri/renderD128 2>/dev/null
+    chmod 666 /dev/dri/*
     sudo usermod -aG video,render $USER
     echo "Add video and render groups"
+    sudo chmod 666 /dev/dri/card0 2>/dev/null
+
+    sudo apt update
 
     echo "WARNING: Terminal will close in 5 seconds to restart the service bridge."
     echo "RE-EXECUTE this script once you re-open the terminal."  
+
     saveState "SETUP_DONE"
 
     sleep 5
+
+    #resets the garcon
 
     systemctl --user daemon-reload
     systemctl --user restart cros-garcon.service
@@ -196,19 +249,15 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
 
     echo "Oppimizing for chromeOS settings and preferences"
 
-    sudo chmod 666 /dev/dri/renderD128 2>/dev/null
-    sudo chmod 666 /dev/dri/card0 2>/dev/null
-
-    export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/virtio_icd.json
     export XDG_SESSION_TYPE=wayland
     export GDK_BACKEND=wayland,x11
     export WAYLAND_DISPLAY=wayland-0
-
     export STEAM_RUNTIME_PREFER_HOST_LIBRARIES=1
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu
     
     testPassed=true
 
+    #self-tests 
     if [[ "$1" == "--ignore-tests" ]]; then
         echo "Skipping self-tests as requested by flag..."
     else
