@@ -73,7 +73,7 @@ if [[ "$currentState" == "START" ]]; then
     sudo rm -f /etc/vulkan/icd.d/virtio*
 
     sudo mkdir -p /etc/vulkan/icd.d
-    cat <<EOF | sudo tee /etc/vulkan/icd.d/virtio_icd.x86_64.json
+     cat <<EOF | sudo tee /etc/vulkan/icd.d/virtio_icd.x86_64.json
 {
     "file_format_version": "1.0.0",
     "ICD": {
@@ -104,10 +104,10 @@ EOF
     sudo mkdir -p /usr/share/vulkan/icd.d/
     
     sudo mkdir -p /usr/share/vulkan/backup/
-    cp /usr/share/vulkan/icd.d/virtio* /usr/share/vulkan/backup/
+    sudo cp /usr/share/vulkan/icd.d/virtio* /usr/share/vulkan/backup/
     
     sudo mkdir -p /etc/vulkan/backup/
-    cp /etc/vulkan/icd.d/virtio* /etc/vulkan/backup/
+    sudo cp /etc/vulkan/icd.d/virtio* /etc/vulkan/backup/
     
     mkdir -p ~/.config/systemd/user/cros-garcon.service.d/
     rm -f ~/.config/systemd/user/cros-garcon.service.d/*.conf
@@ -189,7 +189,7 @@ EOF
 
     #Adds premissions and groups required.
     sudo chmod 666 /dev/dri/renderD128 2>/dev/null
-    chmod 666 /dev/dri/*
+    sudo chmod 666 /dev/dri/*
     sudo usermod -aG video,render $USER
     echo "Add video and render groups"
     sudo chmod 666 /dev/dri/card0 2>/dev/null
