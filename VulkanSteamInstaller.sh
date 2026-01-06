@@ -136,27 +136,33 @@ EOF
     
     #Adds exports files
     echo "VK_ICD_FILENAMES=$vulkanCompiledPath" | sudo tee -a /etc/environment > /dev/null
-    echo "VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select" | sudo tee -a /etc/environment > /dev/null        
+    echo "VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select" | sudo tee -a /etc/environment > /dev/null
+    # Force Wayland and Disable X11 fallback where possible
+    
+    echo "XDG_SESSION_TYPE=wayland" | sudo tee -a /etc/environment > /dev/null
+    echo "WAYLAND_DISPLAY=wayland-0" | sudo tee -a /etc/environment > /dev/null
+    echo "GDK_BACKEND=wayland,x11" | sudo tee -a /etc/environment > /dev/null
+    echo "QT_QPA_PLATFORM=wayland" | sudo tee -a /etc/environment > /dev/null
+    echo "SDL_VIDEODRIVER=wayland" | sudo tee -a /etc/environment > /dev/null
     
     {
         echo "export VK_ICD_FILENAMES=$vulkanCompiledPath"
-        echo "export XDG_RUNTIME_DIR=/run/user/\$(id -u)"
         echo "export VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
         echo "export WAYLAND_DISPLAY=wayland-0"
         echo "export XDG_SESSION_TYPE=wayland"
         echo "export GDK_BACKEND=wayland,x11"
         echo "export QT_QPA_PLATFORM=wayland"
-        echo "export XDG_RUNTIME_DIR=\"/run/user/\$(id -u)\""
         echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu"
         echo "export MESA_VK_DEVICE_SELECT=virtio"
         echo "export VK_USE_PLATFORM_XLIB_KHR=1"
         echo "export VK_USE_PLATFORM_XCB_KHR=1"
         echo "export VK_USE_PLATFORM_WAYLAND_KHR=1"
         echo "export STEAM_RUNTIME_PREFER_HOST_LIBRARIES=1"
+        echo "export XDG_RUNTIME_DIR=/run/user/$(id -u)"
+        echo "export WAYLAND_DISPLAY=wayland-0"
     } >> ~/.bashrc
 
     export VK_ICD_FILENAMES=$vulkanCompiledPath
-    export WAYLAND_DISPLAY=wayland-0
     export XDG_SESSION_TYPE=wayland
     export GDK_BACKEND=wayland,x11
     export QT_QPA_PLATFORM=wayland
@@ -164,6 +170,8 @@ EOF
     export VK_USE_PLATFORM_XLIB_KHR=1
     export VK_USE_PLATFORM_XCB_KHR=1
     export VK_USE_PLATFORM_WAYLAND_KHR=1
+    export XDG_RUNTIME_DIR=/run/user/$(id -u)
+    export WAYLAND_DISPLAY=wayland-0
 
     cat <<EOF > ~/.config/systemd/user/cros-garcon.service.d/vulkan.conf
 [Service]
