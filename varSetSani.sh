@@ -1,3 +1,7 @@
+#!/bin/bash
+[[ -x "$0" ]] || chmod +x "$0" 2>/dev/null
+    
+    
     #clears the the file from old or conflig exports
     vars=("VK_ICD_FILENAMES" "VK_INSTANCE_LAYERS" "WAYLAND_DISPLAY" "XDG_RUNTIME_DIR" "XDG_SESSION_TYPE" "GDK_BACKEND" "QT_QPA_PLATFORM" "SDL_VIDEODRIVER" "DISABLE_WAYLAND_X11_INTEROP" "MESA_VK_DEVICE_SELECT" "STEAM_RUNTIME_PREFER_HOST_LIBRARIES")
     echo "Cleaning up old environment configurations..."
