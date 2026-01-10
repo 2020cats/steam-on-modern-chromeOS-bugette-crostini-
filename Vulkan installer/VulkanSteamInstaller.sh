@@ -1,6 +1,8 @@
 #!/bin/bash
 [[ -x "$0" ]] || chmod +x "$0" 2>/dev/null
 
+recPackgePath=$(find "~/Vulkan installer/etc/" -name "recommend.txt" | head -n 1)
+
 #generate the dashes with the specfic method
 getCols() {
     # 1. Try tput
@@ -61,7 +63,7 @@ if [[ "$currentState" == "START" ]]; then
     sudo apt update && sudo apt upgrade
     sudo dpkg --add-architecture i386
     sudo apt update
-    sudo apt install -y -m mesa-utils xwayland libva-wayland2 libegl-mesa0 libegl1-mesa-dev mesa-vulkan-drivers mesa-vulkan-drivers:i386 vulkan-tools libvulkan1 libvulkan1:i386 libvulkan-dev libvulkan-dev:i386 libwayland-client0 libwayland-client0:i386 libwayland-server0 libwayland-server0:i386  libwayland-egl1:i386 libwayland-cursor0:i386 xdg-desktop-portal-gtk
+    xargs -a "$recPackgePath" sudo apt install -y -m 
 
     
     echo "Cleaning files and config"
@@ -102,98 +104,13 @@ EOF
     #Safety measure to ensure file exist in correct place
     
     sudo mkdir -p /usr/share/vulkan/icd.d/
-    
-    sudo mkdir -p /usr/share/vulkan/backup/
-    sudo cp /usr/share/vulkan/icd.d/virtio* /usr/share/vulkan/backup/
-    
     sudo mkdir -p /etc/vulkan/backup/
+    sudo mkdir -p /usr/share/vulkan/backup/
+    
+    sudo cp /usr/share/vulkan/icd.d/virtio* /usr/share/vulkan/backup/
     sudo cp /etc/vulkan/icd.d/virtio* /etc/vulkan/backup/
-    
-    mkdir -p ~/.config/systemd/user/cros-garcon.service.d/
-    rm -f ~/.config/systemd/user/cros-garcon.service.d/*.conf
-    vulkanConfHome="$HOME/.config/systemd/user/cros-garcon.service.d/vulkan.conf"
-    touch "$vulkanConfHome"
 
-    #clears the the file from old or conflig exports
-    vars=("VK_ICD_FILENAMES" "WAYLAND_DISPLAY" "XDG_RUNTIME_DIR" "XDG_SESSION_TYPE" "GDK_BACKEND" "QT_QPA_PLATFORM" "VK_INSTANCE_LAYERS" "DISPLAY")
-
-    for var in "${vars[@]}"; do
-        sudo sed -i "/^$var=/d" /etc/environment
-        sed -i "/export $var=/d" ~/.bashrc
-        sed -i "/Environment=\"$var=/d" "$vulkanConfHome"
-    done
-
-    #Find file for vulkan and adds the export to files 
-    
-    vulkanCompiledPath=""
-    for file in /usr/share/vulkan/icd.d/virtio*; do  
-        if [ -z "$vulkanCompiledPath" ]; then
-            vulkanCompiledPath="$file"
-        else
-            vulkanCompiledPath+=":$file"
-        fi
-    done
-    
-    #Adds exports files
-    echo "VK_ICD_FILENAMES=$vulkanCompiledPath" | sudo tee -a /etc/environment > /dev/null
-    echo "VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select" | sudo tee -a /etc/environment > /dev/null
-    # Force Wayland and Disable X11 fallback where possible
-    
-    echo "XDG_SESSION_TYPE=wayland" | sudo tee -a /etc/environment > /dev/null
-    echo "WAYLAND_DISPLAY=wayland-0" | sudo tee -a /etc/environment > /dev/null
-    echo "GDK_BACKEND=wayland,x11" | sudo tee -a /etc/environment > /dev/null
-    echo "QT_QPA_PLATFORM=wayland" | sudo tee -a /etc/environment > /dev/null
-    echo "SDL_VIDEODRIVER=wayland" | sudo tee -a /etc/environment > /dev/null
-    
-    {
-        echo "export VK_ICD_FILENAMES=$vulkanCompiledPath"
-        echo "export VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
-        echo "export WAYLAND_DISPLAY=wayland-0"
-        echo "export XDG_SESSION_TYPE=wayland"
-        echo "export GDK_BACKEND=wayland,x11"
-        echo "export QT_QPA_PLATFORM=wayland"
-        echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu"
-        echo "export MESA_VK_DEVICE_SELECT=virtio"
-        echo "export VK_USE_PLATFORM_XLIB_KHR=1"
-        echo "export VK_USE_PLATFORM_XCB_KHR=1"
-        echo "export VK_USE_PLATFORM_WAYLAND_KHR=1"
-        echo "export STEAM_RUNTIME_PREFER_HOST_LIBRARIES=1"
-        echo "export XDG_RUNTIME_DIR=/run/user/$(id -u)"
-        echo "export WAYLAND_DISPLAY=wayland-0"
-    } >> ~/.bashrc
-
-    export VK_ICD_FILENAMES=$vulkanCompiledPath
-    export XDG_SESSION_TYPE=wayland
-    export GDK_BACKEND=wayland,x11
-    export QT_QPA_PLATFORM=wayland
-    export MESA_VK_DEVICE_SELECT=virtio
-    export VK_USE_PLATFORM_XLIB_KHR=1
-    export VK_USE_PLATFORM_XCB_KHR=1
-    export VK_USE_PLATFORM_WAYLAND_KHR=1
-    export XDG_RUNTIME_DIR=/run/user/$(id -u)
-    export WAYLAND_DISPLAY=wayland-0
-
-    cat <<EOF > ~/.config/systemd/user/cros-garcon.service.d/vulkan.conf
-[Service]
-Environment="VK_ICD_FILENAMES=$vulkanCompiledPath"
-Environment="VK_INSTANCE_LAYERS=VK_LAYER_MESA_device_select"
-Environment="WAYLAND_DISPLAY=wayland-0"
-Environment="DISPLAY=:0"
-Environment="XDG_RUNTIME_DIR=/run/user/%U"
-Environment="XDG_SESSION_TYPE=wayland"
-Environment="GDK_BACKEND=wayland,x11"
-Environment="QT_QPA_PLATFORM=wayland"
-Environment="VK_USE_PLATFORM_XCB_KHR=1"
-Environment="VK_USE_PLATFORM_XLIB_KHR=1"
-Environment="VK_USE_PLATFORM_WAYLAND_KHR=1"
-Environment="MESA_VK_DEVICE_SELECT=virtio"
-Environment="STEAM_RUNTIME_PREFER_HOST_LIBRARIES=1"
-EOF
-
-    if ! grep -q "\[Service\]" "$vulkanConfHome"; then
-        echo "[Service]" >> "$vulkanConfHome"
-    fi
-    
+    bash "$(find ~ -name varSetSani.sh | head -n 1)"
 
     #Adds premissions and groups required.
     sudo chmod 666 /dev/dri/renderD128 2>/dev/null
@@ -237,14 +154,11 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
     sudo dpkg --add-architecture i386
     sudo apt update
 
-    echo "install Steam and Dependencies..."
+    echo "install Steam..."
 
-    sudo apt install -y adwaita-icon-theme-legacy oss-compat lm-sensors:i386 pipewire:i386 pocl-opencl-icd:i386 mesa-opencl-icd:i386 steam:i386
+    sudo apt install -y steam:i386
 
     echo "Installing suggested packages..."
-
-    sudo apt install -m -y gvfs gvfs:i386 low-memory-monitor:i386 speex speex:i386 gnutls-bin:i386 krb5-doc krb5-user:i386 libgcrypt20:i386 liblz4-1:i386 libvisual-0.4-plugins jackd2 jackd2:i386 liblcms2-utils liblcms2-utils:i386
-    sudo apt install -m -y gtk2-engines-pixbuf:i386 libgtk2.0-0t64:i386 colord colord:i386 cryptsetup-bin:i386 opus-tools:i386 pulseaudio:i386 librsvg2-bin librsvg2-bin:i386 accountsservice evince xdg-desktop-portal-gnome xfonts-cyrillic
     
     read -p "Do you want to download the recommended enhancement packages? [Y/n] " userWantDownloadYN
     if [[ -z "$userWantDownloadYN" || "$userWantDownloadYN" =~ ^[Yy]$ ]]; then
