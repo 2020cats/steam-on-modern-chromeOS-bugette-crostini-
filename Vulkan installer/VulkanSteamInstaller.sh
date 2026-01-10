@@ -2,6 +2,7 @@
 [[ -x "$0" ]] || chmod +x "$0" 2>/dev/null
 
 recPackgePath=$(find "$HOME/Vulkan installer/etc/" -name "recommend.txt" | head -n 1)
+optPackgePath=$(find "$HOME/Vulkan installer/etc/" -name "optional.txt" | head -n 1)
 
 #generate the dashes with the specfic method
 getCols() {
@@ -164,7 +165,7 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
     read -p "Do you want to download the recommended enhancement packages? [Y/n] " userWantDownloadYN
     if [[ -z "$userWantDownloadYN" || "$userWantDownloadYN" =~ ^[Yy]$ ]]; then
         echo "Downloading recommended enhancement packages."
-        sudo apt install -y -m mangohud protonup-qt goverlay gamemode
+        xargs -a "$optPackgePath" sudo apt install -y -m 
         sudo apt update
     else
         echo "Skipped recommended enhancement packages."
