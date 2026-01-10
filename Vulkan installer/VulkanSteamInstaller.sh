@@ -1,7 +1,7 @@
 #!/bin/bash
 [[ -x "$0" ]] || chmod +x "$0" 2>/dev/null
 
-recPackgePath=$(find "~/Vulkan installer/etc/" -name "recommend.txt" | head -n 1)
+recPackgePath=$(find "$HOME/Vulkan installer/etc/" -name "recommend.txt" | head -n 1)
 
 #generate the dashes with the specfic method
 getCols() {
@@ -75,7 +75,7 @@ if [[ "$currentState" == "START" ]]; then
     sudo rm -f /etc/vulkan/icd.d/virtio*
 
     sudo mkdir -p /etc/vulkan/icd.d
-     cat <<EOF | sudo tee /etc/vulkan/icd.d/virtio_icd.x86_64.json
+    cat <<EOF | sudo tee /etc/vulkan/icd.d/virtio_icd.x86_64.json
 {
     "file_format_version": "1.0.0",
     "ICD": {
@@ -94,7 +94,7 @@ EOF
         "api_version": "1.3.269"
     }
 }
-EOF
+EOF 
 
     #Creating the new files for vulkan and configging them for vulkan on 64 and 32
     sudo cp /etc/vulkan/icd.d/virtio_icd.x86_64.json /usr/share/vulkan/icd.d/
@@ -110,6 +110,7 @@ EOF
     sudo cp /usr/share/vulkan/icd.d/virtio* /usr/share/vulkan/backup/
     sudo cp /etc/vulkan/icd.d/virtio* /etc/vulkan/backup/
 
+    #configs and saves exports to muiple location like garcon
     bash "$(find ~ -name varSetSani.sh | head -n 1)"
 
     #Adds premissions and groups required.
@@ -168,14 +169,6 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
     else
         echo "Skipped recommended enhancement packages."
     fi
-
-    echo "Oppimizing for chromeOS settings and preferences"
-
-    export XDG_SESSION_TYPE=wayland
-    export GDK_BACKEND=wayland,x11
-    export WAYLAND_DISPLAY=wayland-0
-    export STEAM_RUNTIME_PREFER_HOST_LIBRARIES=1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu
     
     testPassed=true
 
@@ -190,20 +183,27 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
             echo "Error: Hardware acceleration not detected. Check your 'Baguette' flags and relaunch in crosh."
             testPassed=false
         fi
-    
-        if dpkg --print-foreign-architectures | grep -q "i386"; then
-            echo "i386 is enabled."
-        else
-            echo "Error: i386 is missing. Steam will not launch"
-            testPassed=false
-        fi
-    
         if ls /usr/share/vulkan/icd.d/ 2>/dev/null | grep -q "virtio"; then
             echo "Vulkan was downloaded correctly and has the json file in the correct place."
         else
             echo "Error: Vulkan was not downloaded correctly or the json file is in a incorrect place."
             testPassed=false
         fi
+        if dpkg --print-foreign-architectures | grep -q "i386"; then
+            echo "I386 has been correctly added."
+        else
+            echo "Error: i386 was not correctly added."
+            testPassed=false
+        fi
+        if command -v vulkaninfo >/dev/null; then
+            ACTIVE_GPU=$(vulkaninfo --summary | grep "deviceName" | head -n 1)
+            echo "Active Vulkan Device: $ACTIVE_GPU"
+            if [[ ! $ACTIVE_GPU == *"Venus"* ]]; then
+                echo "ERROR: Vulkan is present but using software rendering/wrong driver!"
+                testPassed=false
+            fi
+        fi
+
     fi
 
     if [ "$testPassed" = true ]; then
