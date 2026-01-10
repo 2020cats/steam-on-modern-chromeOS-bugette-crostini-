@@ -5,8 +5,12 @@ echo "Starting Sanitization..."
 # Ensure script is executable
 [[ -x "$0" ]] || chmod +x "$0" 2>/dev/null
 
+mkdir -p ~/.config/systemd/user/cros-garcon.service.d/
+rm -f ~/.config/systemd/user/cros-garcon.service.d/*.conf
+
 # Define the garcon config path so the script knows where to clean
 vulkanConfHome="$HOME/.config/systemd/user/cros-garcon.service.d/vulkan.conf"
+touch "$vulkanConfHome"
 
 # 1. Cleanup old entries
 vars=("VK_ICD_FILENAMES" "VK_INSTANCE_LAYERS" "WAYLAND_DISPLAY" "XDG_RUNTIME_DIR" "XDG_SESSION_TYPE" "GDK_BACKEND" "QT_QPA_PLATFORM" "SDL_VIDEODRIVER" "DISABLE_WAYLAND_X11_INTEROP" "MESA_VK_DEVICE_SELECT" "STEAM_RUNTIME_PREFER_HOST_LIBRARIES")
@@ -85,6 +89,11 @@ Environment="DISABLE_WAYLAND_X11_INTEROP=1"
 Environment="MESA_VK_DEVICE_SELECT=virtio"
 Environment="STEAM_RUNTIME_PREFER_HOST_LIBRARIES=1"
 EOF
+
+if ! grep -q "\[Service\]" "$vulkanConfHome"; then
+    echo "[Service]" >> "$vulkanConfHome"
+fi
+
 
 echo "export XDG_RUNTIME_DIR=/run/user/$(id -u)" | sudo tee -a /etc/environment > /dev/null
 
