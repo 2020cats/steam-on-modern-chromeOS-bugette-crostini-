@@ -94,7 +94,7 @@ EOF
         "api_version": "1.3.269"
     }
 }
-EOF 
+EOF
 
     #Creating the new files for vulkan and configging them for vulkan on 64 and 32
     sudo cp /etc/vulkan/icd.d/virtio_icd.x86_64.json /usr/share/vulkan/icd.d/
