@@ -65,12 +65,21 @@ if [[ "$currentState" == "START" ]]; then
     sudo dpkg --add-architecture i386
     sudo apt update
     xargs -a "$recPackgePath" sudo apt install -y -m 
+    
+    read -p "Do you want to download the recommended enhancement packages? [Y/n] " userWantDownloadYN
+    if [[ -z "$userWantDownloadYN" || "$userWantDownloadYN" =~ ^[Yy]$ ]]; then
+        echo "Downloading recommended enhancement packages."
+        xargs -a "$optPackgePath" sudo apt install -y -m 
+        sudo apt update
+    else
+        echo "Skipped recommended enhancement packages."
+    fi
 
     
     echo "Cleaning files and config"
 
-    vulkan64=$(find /usr/lib/x86_64-linux-gnu -name "libvulkan_virtio.so" | head -n 1)
-    vulkan32=$(find /usr/lib/i386-linux-gnu -name "libvulkan_virtio.so" | head -n 1)
+    vulkan64=$(find /usr/lib/x86_64-linux-gnu -name "libvulkan_virtio.so" -o -name "libvulkan_venus.so" | head -n 1)
+    vulkan32=$(find /usr/lib/i386-linux-gnu -name "libvulkan_virtio.so" -o -name "libvulkan_venus.so" | head -n 1)
      
     sudo rm -f /usr/share/vulkan/icd.d/virtio*
     sudo rm -f /etc/vulkan/icd.d/virtio*
@@ -139,6 +148,8 @@ EOF
 fi
 
 if [[ "$currentState" == "SETUP_DONE" ]]; then
+
+    source "$HOME/.bashrc" 2>/dev/null
     rm -f "$stateFile"
     
     drawLine
@@ -162,14 +173,7 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
 
     echo "Installing suggested packages..."
     
-    read -p "Do you want to download the recommended enhancement packages? [Y/n] " userWantDownloadYN
-    if [[ -z "$userWantDownloadYN" || "$userWantDownloadYN" =~ ^[Yy]$ ]]; then
-        echo "Downloading recommended enhancement packages."
-        xargs -a "$optPackgePath" sudo apt install -y -m 
-        sudo apt update
-    else
-        echo "Skipped recommended enhancement packages."
-    fi
+    
     
     testPassed=true
 
