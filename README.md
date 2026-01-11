@@ -19,7 +19,7 @@ You must enable the following chrome flags BEFORE you create the linux enviromen
 
 Now you can go into the chromeOS settings and setup the Linux development environment. I recomend no less then 20GB to ensure you have the space for steam and then some.
 
-# Setup using Installer
+# Setup using Installer (Recommended)
 Start the VM using Crosh (Alt + Ctrl + T). *vmc Launch will give an error.
 ```
 vmc stop termina
@@ -42,6 +42,8 @@ weston --vk-renderer
 **Otherwise...**
 
 # Install Vulkan without Installer
+
+## Warning: This is a pain and most likely not up to date. 
 
 Inside penguin in crosh you now must make sure your system is up to date. Add the i386 architecture and install: xwayland, libva-wayland2, libegl-mesa0, libegl1-mesa-dev, mesa-vulkan-drivers, mesa-vulkan-drivers:i386, vulkan-tools, mesa-utils, libvulkan1, libvulkan1:i386, libvulkan-dev, libvulkan-dev:i386, libwayland-client0, libwayland-client0:i386, libwayland-server0, libwayland-server0:i386, libwayland-egl1:i386, libwayland-cursor0:i386, xdg-desktop-portal-gtk. You can try vmc start but it doesn't seem to work with, vulkan.
 ```
