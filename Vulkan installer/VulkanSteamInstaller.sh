@@ -66,16 +66,6 @@ if [[ "$currentState" == "START" ]]; then
     sudo apt update
     xargs -a "$recPackgePath" sudo apt install -y -m 
     
-    read -p "Do you want to download the recommended enhancement packages? [Y/n] " userWantDownloadYN
-    if [[ -z "$userWantDownloadYN" || "$userWantDownloadYN" =~ ^[Yy]$ ]]; then
-        echo "Downloading recommended enhancement packages."
-        xargs -a "$optPackgePath" sudo apt install -y -m 
-        sudo apt update
-    else
-        echo "Skipped recommended enhancement packages."
-    fi
-
-    
     echo "Cleaning files and config"
 
     vulkan64=$(find /usr/lib/x86_64-linux-gnu -name "libvulkan_virtio.so" -o -name "libvulkan_venus.so" | head -n 1)
@@ -173,7 +163,14 @@ if [[ "$currentState" == "SETUP_DONE" ]]; then
 
     echo "Installing suggested packages..."
     
-    
+    read -p "Do you want to download the recommended enhancement packages? [Y/n]" userWantDownloadYN
+    if [[ -z "$userWantDownloadYN" || "$userWantDownloadYN" =~ ^[Yy]$ ]]; then
+        echo "Downloading recommended enhancement packages."
+        xargs -a "$optPackgePath" sudo apt install -y -m 
+        sudo apt update
+    else
+        echo "Skipped recommended enhancement packages."
+    fi
     
     testPassed=true
 
