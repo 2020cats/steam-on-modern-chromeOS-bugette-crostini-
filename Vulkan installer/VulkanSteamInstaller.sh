@@ -63,6 +63,7 @@ if [[ "$currentState" == "START" ]]; then
     #get read for install 
     sudo apt update && sudo apt upgrade
     sudo dpkg --add-architecture i386
+    echo "APT::Architectures \"$(dpkg --print-architecture),$(dpkg --print-foreign-architectures | tr '\n' ',' | sed 's/,$//')\";" | sudo tee /etc/apt/apt.conf.d/99multilib
     sudo apt update
     xargs -a "$recPackgePath" sudo apt install -y -m 
     
