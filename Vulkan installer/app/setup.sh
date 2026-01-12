@@ -28,13 +28,15 @@ chmod +x "$appDir/Launcher.sh"
 chmod +x "$appDir/appUI.py"
 
 #Perform the copies
-sed -i "s|^Path=.*|Path=\"$appDir\"|" "$appDir/$desktopFilePath"
-sed -i "s|^Exec=.*|Exec=\"$launcherPath\"|" "$appDir/$desktopFilePath"
+sed -i 's|^Path=.*|Path="'"$appDir"'"|' "$appDir/$desktopFilePath"
+sed -i 's|^Exec=.*|Exec="'"$launcherPath"'"|' "$appDir/$desktopFilePath"
 
 sudo cp "$appDir/$iconFileName" "/usr/share/icons/hicolor/48x48/apps/vulkan-installer.png"
 sudo cp "$appDir/$desktopFilePath" "/usr/share/applications/"
 
-sudo chmod 644 "/usr/share/applications/$desktopFileName"
+#Ensures icon actually shows
+sudo chmod 755 /usr/share/applications
+sudo chmod 644 "/usr/share/applications/$desktopFilePath"
 sudo chmod 644 "/usr/share/icons/hicolor/48x48/apps/vulkan-installer.png"
 
 sudo update-desktop-database
