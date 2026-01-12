@@ -2,9 +2,9 @@
 Version=1.0
 Type=Application
 Name=Vulkan Installer
-Comment=Configure and Install Vulkan Drivers for Steam
+Comment=Vulkan Setup
 Exec=file
+Path=file
 Icon=vulkan-installer
 Terminal=false
-Categories=System;Settings;Game;
-Keywords=vulkan;steam;gaming;install;
+Categories=Game;
