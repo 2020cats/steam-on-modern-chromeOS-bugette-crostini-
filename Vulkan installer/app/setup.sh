@@ -15,6 +15,7 @@ appDir="$baseDir/app"
 iconFileName="icon.png"
 desktopFilePath="vulkan-installer.desktop"
 pythonAppPath="$appDir/appUI.py"
+launcherPath="$appDir/Launcher.sh"
 
 # Checks if the files actually exist 
 if [ ! -f "$appDir/$iconFileName" ]; then
@@ -22,8 +23,13 @@ if [ ! -f "$appDir/$iconFileName" ]; then
     exit 1
 fi
 
+#add premissions to be safe
+chmod +x "$appDir/Launcher.sh"
+chmod +x "$appDir/appUI.py"
+
 #Perform the copies
-sed -i "s|^Exec=.*|Exec=python3 \"$pythonAppPath\"|" "$appDir/$desktopFilePath"
+sed -i "s|^Path=.*|Path=\"$appDir\"|" "$appDir/$desktopFilePath"
+sed -i "s|^Exec=.*|Exec=\"$launcherPath\"|" "$appDir/$desktopFilePath"
 
 sudo cp "$appDir/$iconFileName" "/usr/share/icons/hicolor/48x48/apps/vulkan-installer.png"
 sudo cp "$appDir/$desktopFilePath" "/usr/share/applications/"
