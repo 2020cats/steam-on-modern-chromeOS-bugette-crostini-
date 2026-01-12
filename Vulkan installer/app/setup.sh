@@ -14,6 +14,7 @@ baseDir=$(dirname "$installerPath")
 appDir="$baseDir/app"
 iconFileName="icon.png"
 desktopFilePath="vulkan-installer.desktop"
+pythonAppPath="$appDir/appUI.py"
 
 # Checks if the files actually exist 
 if [ ! -f "$appDir/$iconFileName" ]; then
@@ -22,10 +23,13 @@ if [ ! -f "$appDir/$iconFileName" ]; then
 fi
 
 #Perform the copies
-sed -i "s|^Exec=.*|Exec=python3 \"$PYTHON_APP\"|" "$appDir/$desktopFilePath"
+sed -i "s|^Exec=.*|Exec=python3 \"$pythonAppPath\"|" "$appDir/$desktopFilePath"
 
 sudo cp "$appDir/$iconFileName" "/usr/share/icons/hicolor/48x48/apps/vulkan-installer.png"
 sudo cp "$appDir/$desktopFilePath" "/usr/share/applications/"
+
+sudo chmod 644 "/usr/share/applications/$desktopFileName"
+sudo chmod 644 "/usr/share/icons/hicolor/48x48/apps/vulkan-installer.png"
 
 sudo update-desktop-database
 echo "App icon should now appear in your Linux Apps folder!"
