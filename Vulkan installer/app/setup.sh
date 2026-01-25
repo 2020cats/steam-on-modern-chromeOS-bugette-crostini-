@@ -1,10 +1,9 @@
 #!/bin/bash
 
-# 1. Check for Python and Tkinter
-if ! command -v python3 >/dev/null 2>&1; then
-  sudo apt update
-  sudo apt install -y python3 python3-tk
-fi
+# 1. Check for java and Tkinter
+sudo apt update
+sudo apt install default-jdk -y
+
 
 installerPath=$(find "$HOME" -type f -name "VulkanSteamInstaller.sh" -print -quit)
 
@@ -14,7 +13,7 @@ baseDir=$(dirname "$installerPath")
 appDir="$baseDir/app"
 iconFileName="icon.png"
 desktopFilePath="vulkan-installer.desktop"
-pythonAppPath="$appDir/appUI.py"
+javaAppPath="$appDir/appUI.java"
 launcherPath="$appDir/Launcher.sh"
 
 # Checks if the files actually exist 
@@ -25,7 +24,7 @@ fi
 
 #add premissions to be safe
 chmod +x "$appDir/Launcher.sh"
-chmod +x "$appDir/appUI.py"
+chmod +x "$appDir/appUI.java"
 
 #Perform the copies
 sed -i 's|^Path=.*|Path="'"$appDir"'"|' "$appDir/$desktopFilePath"
