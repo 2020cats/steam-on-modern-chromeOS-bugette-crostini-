@@ -27,6 +27,9 @@ chmod +x "$appDir/Launcher.sh"
 chmod +x "$appDir/appUI.java"
 
 #Perform the copies
+echo "Compiling  program"
+javac "$javaAppPath"
+
 sed -i 's|^Path=.*|Path="'"$appDir"'"|' "$appDir/$desktopFilePath"
 sed -i 's|^Exec=.*|Exec="'"$launcherPath"'"|' "$appDir/$desktopFilePath"
 
