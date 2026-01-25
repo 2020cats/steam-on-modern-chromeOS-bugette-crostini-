@@ -1,4 +1,4 @@
 #!/bin/bash
 
-python3 "$(find ~ -name appUI.py | head -n 1)"
+java "$(find ~ -name appUI.java | head -n 1)"
 
